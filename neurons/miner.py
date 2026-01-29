@@ -22,6 +22,8 @@ import torch
 import typing
 import bittensor as bt
 
+import os
+import niquests
 import openmeteo_requests
 
 import numpy as np
@@ -54,7 +56,13 @@ class Miner(BaseMinerNeuron):
         
         # TODO(miner): Anything specific to your use case you can do here
         self.device: torch.device = torch.device(get_device_str())
-        self.openmeteo_api = openmeteo_requests.Client()
+        
+        proxy_url = os.getenv("OPEN_METEO_PROXY")
+        session = niquests.Session()
+        if proxy_url:
+            session.proxies = {"http": proxy_url, "https": proxy_url}
+
+        self.openmeteo_api = openmeteo_requests.Client(session=session)
 
     async def forward(self, synapse: TimePredictionSynapse) -> TimePredictionSynapse:
         """
@@ -84,10 +92,23 @@ class Miner(BaseMinerNeuron):
             "hourly": converter.om_name,
             "start_hour": start_time.isoformat(timespec="minutes"),
             "end_hour": end_time.isoformat(timespec="minutes"),
+            "models": "ecmwf_aifs025"
         }
-        responses = self.openmeteo_api.weather_api(
-            "https://api.open-meteo.com/v1/forecast", params=params, method="POST"
-        )
+        try:
+            responses = self.openmeteo_api.weather_api(
+                "https://api.open-meteo.com/v1/forecast", params=params, method="POST"
+            )
+            bt.logging.info(f"Successfully fetched with ecmwf_aifs025")
+        except Exception as e:
+            if params["models"] == "ecmwf_aifs025":
+                bt.logging.warning(f"Failed to fetch with ecmwf_aifs025, retrying with best_match. Error: {e}")
+                params["models"] = "best_match"
+                responses = self.openmeteo_api.weather_api(
+                    "https://api.open-meteo.com/v1/forecast", params=params, method="POST"
+                )
+                bt.logging.info(f"Successfully fetched with best_match")
+            else:
+                raise e 
 
         # get output as grid of [time, lat, lon, variables]
         output = torch.Tensor(np.stack(

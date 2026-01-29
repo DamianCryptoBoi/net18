@@ -1,5 +1,6 @@
 import os
 import openmeteo_requests
+import niquests
 
 import numpy as np
 import torch
@@ -20,7 +21,13 @@ class OpenMeteoLoader:
         
         self.api_key = os.getenv("OPEN_METEO_API_KEY")
         self.open_meteo_url = open_meteo_url
-        self.open_meteo_api = openmeteo_requests.Client()
+        
+        proxy_url = os.getenv("OPEN_METEO_PROXY")
+        session = niquests.Session()
+        if proxy_url:
+            session.proxies = {"http": proxy_url, "https": proxy_url}
+
+        self.open_meteo_api = openmeteo_requests.Client(session=session)
 
     def get_output(self, sample: Era5Sample, model: str = "best_match") -> torch.Tensor:
         start_time = to_timestamp(sample.start_timestamp)
