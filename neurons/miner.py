@@ -95,23 +95,26 @@ class Miner(BaseMinerNeuron):
             "hourly": converter.om_name,
             "start_hour": start_time.isoformat(timespec="minutes"),
             "end_hour": end_time.isoformat(timespec="minutes"),
-            "models": "ecmwf_aifs025"
+            # "models": "ecmwf_aifs025"
         }
-        try:
-            responses = self.openmeteo_api.weather_api(
+        responses = self.openmeteo_api.weather_api(
                 "https://api.open-meteo.com/v1/forecast", params=params, method="POST"
             )
-            bt.logging.info(f"Successfully fetched with ecmwf_aifs025")
-        except Exception as e:
-            if params["models"] == "ecmwf_aifs025":
-                bt.logging.warning(f"Failed to fetch with ecmwf_aifs025, retrying with best_match. Error: {e}")
-                params["models"] = "best_match"
-                responses = self.openmeteo_api.weather_api(
-                    "https://api.open-meteo.com/v1/forecast", params=params, method="POST"
-                )
-                bt.logging.info(f"Successfully fetched with best_match")
-            else:
-                raise e 
+        # try:
+        #     responses = self.openmeteo_api.weather_api(
+        #         "https://api.open-meteo.com/v1/forecast", params=params, method="POST"
+        #     )
+        #     bt.logging.info(f"Successfully fetched with ecmwf_aifs025")
+        # except Exception as e:
+        #     if params["models"] == "ecmwf_aifs025":
+        #         bt.logging.warning(f"Failed to fetch with ecmwf_aifs025, retrying with best_match. Error: {e}")
+        #         params["models"] = "best_match"
+        #         responses = self.openmeteo_api.weather_api(
+        #             "https://api.open-meteo.com/v1/forecast", params=params, method="POST"
+        #         )
+        #         bt.logging.info(f"Successfully fetched with best_match")
+        #     else:
+        #         raise e 
 
         # get output as grid of [time, lat, lon, variables]
         output = torch.Tensor(np.stack(
