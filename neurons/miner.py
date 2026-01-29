@@ -132,7 +132,7 @@ class Miner(BaseMinerNeuron):
         # Convert variable(s) to ERA5 units, combines variables for windspeed
         output = converter.om_to_era5(output)
         # Sanitize output to replace NaNs and Infs which are not JSON compliant
-        output = torch.nan_to_num(output, nan=0.0, posinf=None, neginf=None)
+        # output = torch.nan_to_num(output, nan=0.0, posinf=None, neginf=None)
         bt.logging.info(f"Output values: {output}")
         ##########################################################################################################
         bt.logging.info(f"Output shape is {output.shape}")
