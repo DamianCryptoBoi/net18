@@ -61,6 +61,9 @@ class Miner(BaseMinerNeuron):
         session = niquests.Session()
         if proxy_url:
             session.proxies = {"http": proxy_url, "https": proxy_url}
+            bt.logging.info(f"Using proxy: {proxy_url}")
+        else:
+            bt.logging.info("No proxy configured")
 
         self.openmeteo_api = openmeteo_requests.Client(session=session)
 
